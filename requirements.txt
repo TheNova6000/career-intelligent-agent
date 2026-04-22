@@ -1,0 +1,8 @@
+Flask==3.0.2
+requests==2.31.0
+beautifulsoup4==4.12.3
+google-generativeai==0.3.2
+groq==0.4.2
+pypdf==4.0.1
+pytesseract==0.3.10
+python-dotenv==1.0.1

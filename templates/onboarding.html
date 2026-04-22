@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-10">
+    <div class="glass p-8 md:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+        
+        <h2 class="text-3xl font-bold mb-2 tracking-tight">Phase 1: Profile Intelligence</h2>
+        <p class="text-gray-400 mb-8 text-sm md:text-base">Let's build your virtual character. The system needs to understand your ambitions.</p>
+        
+        <div id="chat-container" class="space-y-6 mb-8 h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-700">
+            <!-- Messages injected here -->
+        </div>
+
+        <div class="flex gap-3 relative">
+            <input type="text" id="user-input" 
+                class="flex-grow bg-darkPanel/50 border border-gray-700 rounded-xl px-5 py-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" 
+                placeholder="Type your response here..."
+                onkeypress="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()" 
+                class="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all hover:shadow-[0_0_20px_-5px_rgba(59,130,246,0.5)]">
+                Send
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+</style>
+
+<script>
+    let currentStep = 1;
+
+    function addMessage(sender, text) {
+        const chat = document.getElementById('chat-container');
+        const isAgent = sender === 'Agent';
+        const msgWrapper = document.createElement('div');
+        msgWrapper.className = `flex ${isAgent ? 'justify-start' : 'justify-end'} opacity-0 translate-y-4 transition-all duration-500 ease-out`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = `p-5 rounded-2xl max-w-[85%] text-sm leading-relaxed ${
+            isAgent 
+            ? 'bg-blue-900/20 border border-blue-500/20 text-blue-50 rounded-tl-sm' 
+            : 'bg-gray-800 text-gray-100 rounded-tr-sm border border-gray-700'
+        }`;
+        
+        bubble.innerHTML = `<div class="font-semibold mb-1 text-xs uppercase tracking-wider ${isAgent ? 'text-blue-400' : 'text-gray-400'}">${sender}</div> <div>${text}</div>`;
+        
+        msgWrapper.appendChild(bubble);
+        chat.appendChild(msgWrapper);
+        
+        // Trigger reflow for animation
+        setTimeout(() => {
+            msgWrapper.classList.remove('opacity-0', 'translate-y-4');
+        }, 50);
+
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    // Initial load
+    window.onload = () => {
+        addMessage('Agent', "What kind of internships are you looking for? Tell me the roles, domains, or companies you're excited about — and why. Also, what city or work mode (remote/hybrid/on-site) works for you?");
+    };
+
+    async function sendMessage() {
+        const inputField = document.getElementById('user-input');
+        const text = inputField.value.trim();
+        if(!text) return;
+        
+        addMessage('You', text);
+        inputField.value = '';
+
+        // Typing indicator
+        const typingId = 'typing-' + Date.now();
+        const chat = document.getElementById('chat-container');
+        const typingDiv = document.createElement('div');
+        typingDiv.id = typingId;
+        typingDiv.className = 'flex justify-start';
+        typingDiv.innerHTML = `<div class="p-4 bg-blue-900/10 border border-blue-500/10 rounded-2xl rounded-tl-sm text-blue-400 text-xs flex gap-1">
+            <span class="animate-bounce">•</span><span class="animate-bounce delay-100">•</span><span class="animate-bounce delay-200">•</span>
+        </div>`;
+        chat.appendChild(typingDiv);
+        chat.scrollTop = chat.scrollHeight;
+
+        const response = await fetch('/api/onboarding/step', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({step: currentStep, input: text, user_id: 1})
+        });
+        
+        document.getElementById(typingId).remove();
+        
+        const data = await response.json();
+        addMessage('Agent', data.response);
+        currentStep++;
+
+        if(currentStep > 4) {
+            setTimeout(async () => {
+                addMessage('Agent', 'Synthesizing your virtual character from all sources (LinkedIn, GitHub, Resume)...');
+                const synRes = await fetch('/api/onboarding/synthesize', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user_id: 1})
+                });
+                const synData = await synRes.json();
+                addMessage('Agent', 'Synthesis complete! Profile locked in.<br><br><a href="/opportunities" class="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition mt-2">Proceed to Opportunities &rarr;</a>');
+            }, 1500);
+        }
+    }
+</script>
+{% endblock %}

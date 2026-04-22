@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto mt-6">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-bold tracking-tight">Opportunity Engine</h2>
+            <p class="text-gray-400 mt-1">Reviewing opportunities matching your virtual character.</p>
+        </div>
+        <button onclick="fetchOpportunities()" id="search-btn" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-semibold transition-all">
+            Scan for Jobs
+        </button>
+    </div>
+
+    <div id="loading" class="hidden text-center py-20">
+        <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 text-gray-400 text-sm">Scanning LinkedIn, Internshala, and Wellfound...</p>
+    </div>
+
+    <div id="jobs-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Jobs will be rendered here -->
+    </div>
+</div>
+
+<script>
+    async function fetchOpportunities() {
+        const btn = document.getElementById('search-btn');
+        const loading = document.getElementById('loading');
+        const container = document.getElementById('jobs-container');
+        
+        btn.disabled = true;
+        btn.innerText = 'Scanning...';
+        loading.classList.remove('hidden');
+        container.innerHTML = '';
+
+        try {
+            const res = await fetch('/api/opportunities/search', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({user_id: 1})
+            });
+            const data = await res.json();
+            
+            loading.classList.add('hidden');
+            btn.disabled = false;
+            btn.innerText = 'Scan for Jobs';
+
+            if(data.opportunities && data.opportunities.length > 0) {
+                data.opportunities.forEach(job => {
+                    const card = document.createElement('div');
+                    card.className = 'glass p-6 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-colors group relative overflow-hidden';
+                    card.id = `job-${job.id}`;
+                    
+                    const skillsData = typeof job.required_skills === 'string' ? JSON.parse(job.required_skills) : job.required_skills;
+                    const skillsBadge = (skillsData || []).map(s => 
+                        `<span class="px-2 py-1 bg-blue-900/30 text-blue-300 text-xs rounded-md border border-blue-800/50">${s}</span>`
+                    ).join('');
+
+                    card.innerHTML = `
+                        <div class="absolute top-0 right-0 p-4">
+                            <div class="flex items-center gap-1 text-xs font-bold ${job.match_score > 90 ? 'text-green-400' : 'text-yellow-400'}">
+                                <span>${job.match_score}% Match</span>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-bold mb-1 group-hover:text-blue-400 transition-colors">${job.designation}</h3>
+                        <div class="text-gray-400 text-sm mb-4 flex items-center gap-2">
+                            <span>${job.company_name}</span> &bull; <span>${job.location}</span>
+                        </div>
+                        <p class="text-sm text-gray-300 mb-4 line-clamp-2">${job.description_summary}</p>
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            ${skillsBadge}
+                        </div>
+                        <div class="flex gap-2 border-t border-gray-800 pt-4">
+                            <button onclick="approveJob(${job.id}, 'Y')" class="flex-1 py-2 bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-green-800/50">
+                                Approve
+                            </button>
+                            <button onclick="approveJob(${job.id}, 'N')" class="flex-1 py-2 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-red-800/50">
+                                Reject
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } else {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">No new opportunities found matching your profile.</div>';
+            }
+        } catch (e) {
+            console.error(e);
+            loading.classList.add('hidden');
+            btn.disabled = false;
+            btn.innerText = 'Scan for Jobs';
+        }
+    }
+
+    async function approveJob(jobId, decision) {
+        document.getElementById(`job-${jobId}`).style.opacity = '0.5';
+        document.getElementById(`job-${jobId}`).style.pointerEvents = 'none';
+
+        await fetch('/api/opportunities/approve', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({opportunity_id: jobId, decision: decision})
+        });
+
+        if(decision === 'Y') {
+            window.location.href = `/company/${jobId}`;
+        } else {
+            document.getElementById(`job-${jobId}`).style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

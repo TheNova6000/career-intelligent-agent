@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Intelligence Agent</title>
+    <!-- Tailwind setup via CDN for immediate rich UI per spec -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        darkBg: '#0f172a',
+                        darkPanel: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+            CIA.
+        </div>
+        <div class="flex gap-6 text-sm font-medium">
+            <a href="/" class="hover:text-blue-400 transition-colors">Home</a>
+            <a href="/onboarding" class="hover:text-blue-400 transition-colors">Onboarding</a>
+            <a href="/opportunities" class="hover:text-blue-400 transition-colors">Opportunities</a>
+        </div>
+    </nav>
+    <main class="flex-grow p-6">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="text-center py-6 text-sm text-gray-600 border-t border-gray-800 mt-auto glass">
+        &copy; 2026 Career Intelligence Agent
+    </footer>
+</body>
+</html>
