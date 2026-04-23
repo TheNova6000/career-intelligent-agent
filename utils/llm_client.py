@@ -19,7 +19,8 @@ def call_openrouter(prompt: str, json_mode: bool = False) -> str:
         json={
             "model": "openrouter/free", 
             "messages": [{"role": "user", "content": prompt}]
-        }
+        },
+        timeout=15
     )
     response.raise_for_status()
     res_json = response.json()
@@ -29,7 +30,7 @@ def generate_json_response(prompt: str) -> dict:
     if OPENROUTER_API_KEY:
         try:
             # Instruct the model to strictly return JSON in case the model ignores response_format
-            prompt_with_json = prompt + "\n\nCRITICAL: Return ONLY valid JSON."
+            prompt_with_json = prompt + "\n\nCRITICAL: Return ONLY valid JSON. Return an object."
             content = call_openrouter(prompt_with_json, json_mode=True)
             
             # Robust JSON extraction

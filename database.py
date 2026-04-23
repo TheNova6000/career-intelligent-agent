@@ -114,6 +114,30 @@ def init_db():
         );
     ''')
     conn.commit()
+    # Apply lightweight migrations for opportunities table to add fields
+    # if they don't already exist. This keeps existing DB files compatible.
+    try:
+        c.execute("PRAGMA table_info(opportunities)")
+        cols = {row[1] for row in c.fetchall()}  # row[1] is column name
+
+        # Add common job metadata columns if missing
+        if 'date_posted' not in cols:
+            c.execute("ALTER TABLE opportunities ADD COLUMN date_posted TEXT")
+        if 'discovered_at' not in cols:
+            c.execute("ALTER TABLE opportunities ADD COLUMN discovered_at TEXT")
+        if 'expires_at' not in cols:
+            c.execute("ALTER TABLE opportunities ADD COLUMN expires_at TEXT")
+        if 'updated_at' not in cols:
+            c.execute("ALTER TABLE opportunities ADD COLUMN updated_at TIMESTAMP")
+
+        # Ensure a unique index to avoid duplicate job records per user/source
+        c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_opportunities_unique ON opportunities (user_id, job_id, source_platform)")
+        conn.commit()
+    except Exception:
+        # If migration fails, keep going — app will still function, but without
+        # the new columns. We avoid crashing user's DB on schema changes.
+        pass
+
     conn.close()
 
 if __name__ == '__main__':

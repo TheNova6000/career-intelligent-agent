@@ -3,6 +3,8 @@ from database import get_db_connection
 from services.phase1_onboarding import handle_onboarding_step, synthesize_profile
 from services.phase2_opportunities import search_opportunities, process_approval
 from services.phase3_company_intel import generate_company_report
+from services.phase2_opportunities import load_more_opportunities
+import threading
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -40,6 +42,18 @@ def approve_opp():
     
     process_approval(opp_id, decision)
     return jsonify({"status": "success"})
+
+
+@bp.route('/opportunities/load_more', methods=['POST'])
+def load_more():
+    data = request.json or {}
+    user_id = data.get('user_id', 1)
+    page = int(data.get('page', 1))
+    per_page = int(data.get('per_page', 10))
+
+    # schedule background fetch so UI can remain responsive
+    threading.Thread(target=load_more_opportunities, args=(user_id, page, per_page), daemon=True).start()
+    return jsonify({"status": "scheduled", "page": page, "per_page": per_page}), 202
 
 @bp.route('/company/report/<int:opp_id>', methods=['GET'])
 def company_report(opp_id):
