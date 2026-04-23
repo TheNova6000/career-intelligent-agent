@@ -4,43 +4,144 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Career Intelligence Agent</title>
-    <!-- Tailwind setup via CDN for immediate rich UI per spec -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: {
+                        display: ['"Space Grotesk"', 'ui-sans-serif', 'system-ui'],
+                        body: ['"IBM Plex Sans"', 'ui-sans-serif', 'system-ui'],
+                        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace']
+                    },
                     colors: {
-                        primary: '#3b82f6',
-                        darkBg: '#0f172a',
-                        darkPanel: '#1e293b'
+                        ink: '#09111f',
+                        panel: '#101a2f',
+                        panelSoft: '#16233d',
+                        edge: '#233557',
+                        cyan: '#72e4ff',
+                        aqua: '#46c7c7',
+                        ember: '#ffb36b',
+                        coral: '#ff7e6b',
+                        mist: '#9db5d3'
+                    },
+                    boxShadow: {
+                        halo: '0 24px 80px -36px rgba(114, 228, 255, 0.35)',
+                        card: '0 18px 45px -24px rgba(0, 0, 0, 0.65)'
+                    },
+                    backgroundImage: {
+                        grid: 'linear-gradient(rgba(157,181,211,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(157,181,211,0.08) 1px, transparent 1px)'
                     }
                 }
             }
         }
     </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        :root {
+            color-scheme: dark;
+        }
+
+        body {
+            font-family: "IBM Plex Sans", system-ui, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(114, 228, 255, 0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(255, 179, 107, 0.12), transparent 28%),
+                linear-gradient(180deg, #09111f 0%, #0c1424 45%, #101728 100%);
+            color: #f4f7fb;
+        }
+
+        .app-grid {
+            background-image:
+                linear-gradient(rgba(157, 181, 211, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(157, 181, 211, 0.06) 1px, transparent 1px);
+            background-size: 44px 44px;
+            background-position: center center;
+        }
+
+        .panel-shell {
+            background: linear-gradient(180deg, rgba(16, 26, 47, 0.92) 0%, rgba(13, 22, 39, 0.92) 100%);
+            border: 1px solid rgba(90, 116, 154, 0.28);
+            box-shadow: 0 18px 45px -24px rgba(0, 0, 0, 0.68);
+            backdrop-filter: blur(16px);
+        }
+
+        .signal-line {
+            background: linear-gradient(90deg, #72e4ff 0%, #46c7c7 50%, #ffb36b 100%);
+        }
+
+        .phase-pill {
+            border: 1px solid rgba(114, 228, 255, 0.22);
+            background: rgba(114, 228, 255, 0.08);
+        }
+
+        .glow-dot {
+            box-shadow: 0 0 18px rgba(114, 228, 255, 0.7);
+        }
+
+        .text-balance {
+            text-wrap: balance;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 7px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(114, 228, 255, 0.22);
+            border-radius: 999px;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
-    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
-        <div class="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-            CIA.
-        </div>
-        <div class="flex gap-6 text-sm font-medium">
-            <a href="/" class="hover:text-blue-400 transition-colors">Home</a>
-            <a href="/onboarding" class="hover:text-blue-400 transition-colors">Onboarding</a>
-            <a href="/opportunities" class="hover:text-blue-400 transition-colors">Opportunities</a>
-        </div>
-    </nav>
-    <main class="flex-grow p-6">
-        {% block content %}{% endblock %}
-    </main>
-    <footer class="text-center py-6 text-sm text-gray-600 border-t border-gray-800 mt-auto glass">
-        &copy; 2026 Career Intelligence Agent
-    </footer>
+<body class="min-h-screen font-body antialiased">
+    <div class="fixed inset-0 app-grid opacity-60 pointer-events-none"></div>
+    <div class="fixed inset-x-0 top-0 h-40 bg-gradient-to-b from-cyan/8 to-transparent pointer-events-none"></div>
+
+    <div class="relative min-h-screen flex flex-col">
+        <header class="px-4 pt-4 sm:px-6 lg:px-8">
+            <div class="panel-shell mx-auto max-w-7xl rounded-[28px] overflow-hidden">
+                <div class="signal-line h-[2px] w-full"></div>
+                <div class="flex flex-col gap-5 px-5 py-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan/20 bg-cyan/10 font-display text-lg font-bold text-cyan shadow-halo">
+                            CIA
+                        </div>
+                        <div>
+                            <a href="/" class="font-display text-2xl font-bold tracking-tight text-white">Career Intelligence Agent</a>
+                            <p class="text-sm text-mist">Signal-driven hiring strategy for candidates who want context, not templates.</p>
+                        </div>
+                    </div>
+
+                    <nav class="flex flex-wrap items-center gap-2 text-sm font-medium text-mist">
+                        <a href="/" class="rounded-full border border-white/6 px-4 py-2 transition hover:border-cyan/30 hover:bg-cyan/8 hover:text-white">Home</a>
+                        <a href="/dashboard" class="rounded-full border border-white/6 px-4 py-2 transition hover:border-cyan/30 hover:bg-cyan/8 hover:text-white">Profiles</a>
+                        <a href="/onboarding" class="rounded-full border border-white/6 px-4 py-2 transition hover:border-cyan/30 hover:bg-cyan/8 hover:text-white">Onboarding</a>
+                        <a href="/opportunities" class="rounded-full border border-white/6 px-4 py-2 transition hover:border-cyan/30 hover:bg-cyan/8 hover:text-white">Opportunities</a>
+                        <a href="/login" class="rounded-full bg-white px-4 py-2 font-semibold text-ink transition hover:bg-cyan hover:text-ink">New Session</a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <main class="relative z-10 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="px-4 pb-4 sm:px-6 lg:px-8">
+            <div class="panel-shell mx-auto max-w-7xl rounded-[24px] px-6 py-4">
+                <div class="flex flex-col gap-2 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
+                    <p>Career Intelligence Agent • local-first candidate workflow system</p>
+                    <p class="font-mono text-xs uppercase tracking-[0.24em] text-mist/70">2026 command layer</p>
+                </div>
+            </div>
+        </footer>
+    </div>
 </body>
 </html>

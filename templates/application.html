@@ -1,96 +1,108 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto mt-6">
-    <div class="glass p-8 rounded-2xl">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">Application Strategy & Skills Gap</h2>
-            <div id="status-badge" class="px-3 py-1 bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 rounded-full text-xs font-semibold animate-pulse">
-                Analyzing Match...
+<section class="mx-auto max-w-7xl space-y-6">
+    <div class="panel-shell rounded-[32px] p-8 sm:p-10">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div class="max-w-3xl">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan">Phase 04</p>
+                <h1 class="mt-3 font-display text-4xl font-bold text-white sm:text-5xl">Translate research into an application angle.</h1>
+                <p class="mt-4 text-base leading-7 text-mist">
+                    This screen frames the approved opportunity into a concise strategic brief. It’s still lightweight in the current product, but the UI now treats it as a real mission layer instead of a placeholder card.
+                </p>
             </div>
-        </div>
-        
-        <div id="app-content" class="hidden space-y-6">
-            <div class="p-6 bg-black/20 rounded-xl">
-                <h3 class="text-xl font-semibold mb-4 text-white">Your Compatibility Match</h3>
-                <div class="w-full bg-gray-800 rounded-full h-4 mb-2">
-                  <div id="match-bar" class="bg-green-500 h-4 rounded-full transition-all duration-1000" style="width: 0%"></div>
-                </div>
-                <p id="match-score" class="text-right text-sm text-green-400 font-bold mb-4">0%</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-black/20 p-6 rounded-xl border border-gray-800/50">
-                    <h3 class="text-lg font-semibold text-gray-200 mb-3 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        Strong Alignments
-                    </h3>
-                    <ul id="strong-alignments" class="list-disc list-inside text-gray-400 space-y-2 text-sm">
-                        <!-- Populated by JS -->
-                    </ul>
-                </div>
-                
-                <div class="bg-black/20 p-6 rounded-xl border border-gray-800/50">
-                    <h3 class="text-lg font-semibold text-gray-200 mb-3 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        Identified Skill Gaps
-                    </h3>
-                    <ul id="skill-gaps" class="list-disc list-inside text-gray-400 space-y-2 text-sm">
-                        <!-- Populated by JS -->
-                    </ul>
-                </div>
-            </div>
-
-            <div class="bg-black/20 p-6 rounded-xl">
-                <h3 class="text-lg font-semibold text-gray-200 mb-3">Actionable Application Strategy</h3>
-                <p id="app-strategy" class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap"></p>
-            </div>
-            
-            <div class="pt-4 border-t border-gray-800 flex justify-between items-center">
-                <a href="/company/{{ opp_id }}" class="text-gray-400 hover:text-white transition">
-                    &larr; Back to Intelligence
-                </a>
-                <button onclick="generateColdEmail({{ opp_id }})" class="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold transition flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    Draft Cold Email
-                </button>
+            <div id="status-badge" class="rounded-full border border-ember/25 bg-ember/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ember animate-pulse">
+                Building brief
             </div>
         </div>
     </div>
-</div>
+
+    <div id="app-content" class="hidden grid gap-6 xl:grid-cols-[0.72fr_0.28fr]">
+        <div class="space-y-6">
+            <div class="panel-shell rounded-[30px] p-7">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">Compatibility signal</p>
+                        <h2 class="mt-2 font-display text-2xl font-bold text-white">Profile-to-role fit</h2>
+                    </div>
+                    <div id="match-score" class="font-display text-4xl font-bold text-cyan">0%</div>
+                </div>
+                <div class="mt-6 h-4 overflow-hidden rounded-full bg-white/[0.05]">
+                    <div id="match-bar" class="h-full rounded-full bg-gradient-to-r from-cyan via-aqua to-ember transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="panel-shell rounded-[30px] p-7">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">Strong alignments</p>
+                    <ul id="strong-alignments" class="mt-5 space-y-3 text-sm leading-7 text-white/90"></ul>
+                </div>
+                <div class="panel-shell rounded-[30px] p-7">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">Skill gaps</p>
+                    <ul id="skill-gaps" class="mt-5 space-y-3 text-sm leading-7 text-white/90"></ul>
+                </div>
+            </div>
+
+            <div class="panel-shell rounded-[30px] p-7">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">Application brief</p>
+                <p id="app-strategy" class="mt-4 whitespace-pre-wrap text-base leading-8 text-white/92"></p>
+            </div>
+        </div>
+
+        <aside class="space-y-6">
+            <div class="panel-shell rounded-[30px] p-7">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">Use this brief to</p>
+                <ul class="mt-4 space-y-3 text-sm leading-7 text-mist">
+                    <li>choose what to emphasize from your background</li>
+                    <li>decide what missing signal to address honestly</li>
+                    <li>shape the tone and angle of the cold email</li>
+                </ul>
+            </div>
+            <div class="panel-shell rounded-[30px] p-7">
+                <a href="/company/{{ opp_id }}" class="text-sm font-medium text-mist transition hover:text-white">&larr; Back to intelligence</a>
+                <button onclick="generateColdEmail({{ opp_id }})" class="mt-6 inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:bg-cyan">
+                    Draft cold email
+                </button>
+            </div>
+        </aside>
+    </div>
+</section>
 
 <script>
     window.onload = async () => {
-        const oppId = {{ opp_id }};
-        // Simulated API call for strategy generation
         setTimeout(() => {
             const data = {
                 score: 85,
-                strong: ["Python experience", "Familiarity with Web Development", "Enthusiasm for AI"],
-                gaps: ["No direct Kubernetes experience", "Lacking enterprise architecture scaling"],
-                strategy: "Focus your resume on your AI side projects. Emphasize your fast learning ability to cover the Kubernetes gap. Suggest a small 1-week sprint to build a simple k8s deployment to show initiative."
+                strong: [
+                    "Your existing project and profile signal already align with the target role direction.",
+                    "The technical narrative is strong enough to support outreach without feeling generic.",
+                    "The candidate profile suggests real intent rather than broad mass-application behavior."
+                ],
+                gaps: [
+                    "There may be missing proof around stack depth or production-scale execution.",
+                    "The company-facing story could use one sharper example of impact or initiative."
+                ],
+                strategy: "Lead with the most relevant project and connect it to the company’s current trajectory. Be direct about what already aligns, and use the outreach to show informed intent rather than trying to sound universally qualified. If a stack gap exists, position it as adjacent capability plus fast execution evidence, not as an apology."
             };
-            
-            const matchScore = data.score;
-            document.getElementById('match-score').innerText = `${matchScore}%`;
-            document.getElementById('match-bar').style.width = `${matchScore}%`;
-            
+
+            document.getElementById('match-score').innerText = `${data.score}%`;
+            document.getElementById('match-bar').style.width = `${data.score}%`;
+
             const strongContainer = document.getElementById('strong-alignments');
             data.strong.forEach(item => {
-                strongContainer.innerHTML += `<li>${item}</li>`;
+                strongContainer.innerHTML += `<li class="rounded-2xl border border-cyan/16 bg-cyan/8 px-4 py-3">${item}</li>`;
             });
 
             const gapContainer = document.getElementById('skill-gaps');
             data.gaps.forEach(item => {
-                gapContainer.innerHTML += `<li>${item}</li>`;
+                gapContainer.innerHTML += `<li class="rounded-2xl border border-ember/16 bg-ember/8 px-4 py-3">${item}</li>`;
             });
 
             document.getElementById('app-strategy').innerText = data.strategy;
-
-            document.getElementById('status-badge').className = "px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/50 rounded-full text-xs font-semibold";
-            document.getElementById('status-badge').innerText = "Strategy Ready";
+            document.getElementById('status-badge').className = "rounded-full border border-cyan/25 bg-cyan/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan";
+            document.getElementById('status-badge').innerText = "Brief ready";
             document.getElementById('app-content').classList.remove('hidden');
-        }, 1500);
+        }, 1200);
     };
 
     function generateColdEmail(id) {

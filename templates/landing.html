@@ -1,30 +1,79 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="flex flex-col items-center justify-center min-h-[80vh] text-center px-4 relative overflow-hidden">
-    <!-- Decorative background elements -->
-    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px] pointer-events-none"></div>
-    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] pointer-events-none"></div>
-    
-    <div class="relative z-10">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gray-700 bg-gray-800/50 text-xs font-medium text-gray-300 mb-8 backdrop-blur-md">
-            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-            System Online
+<section class="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+    <div class="panel-shell relative overflow-hidden rounded-[32px] px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+        <div class="absolute right-0 top-0 h-40 w-40 rounded-full bg-cyan/12 blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-ember/10 blur-3xl"></div>
+
+        <div class="relative z-10 max-w-3xl">
+            <div class="phase-pill inline-flex items-center gap-3 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-cyan">
+                <span class="glow-dot h-2.5 w-2.5 rounded-full bg-cyan"></span>
+                Career Command Center
+            </div>
+
+            <h1 class="mt-8 max-w-3xl font-display text-5xl font-bold leading-[0.95] text-white sm:text-6xl lg:text-7xl">
+                Stop job hunting like it’s a pile of tabs.
+            </h1>
+
+            <p class="mt-6 max-w-2xl text-balance text-lg leading-8 text-mist sm:text-xl">
+                This system learns your signal, searches across role domains, builds company intelligence, and turns approved opportunities into tailored outreach drafts.
+            </p>
+
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a href="/onboarding" class="inline-flex items-center justify-center rounded-full bg-white px-7 py-4 text-base font-semibold text-ink transition hover:bg-cyan hover:text-ink">
+                    Start the pipeline
+                </a>
+                <a href="/dashboard" class="inline-flex items-center justify-center rounded-full border border-white/10 px-7 py-4 text-base font-semibold text-white transition hover:border-cyan/30 hover:bg-cyan/8">
+                    Open profile board
+                </a>
+            </div>
         </div>
-        
-        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight leading-tight">
-            Your Autonomous <br>
-            <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
-                Career Strategist
-            </span>
-        </h1>
-        <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Stop manually searching for jobs, rewriting resumes, and writing cold emails. 
-            Unify your entire career workflow into one intelligent assembly line.
-        </p>
-        <a href="/onboarding" class="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 rounded-full font-semibold text-lg transition-all hover:scale-105 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
-            Initialize Pipeline &rarr;
-        </a>
     </div>
-</div>
+
+    <div class="grid gap-6">
+        <div class="panel-shell rounded-[30px] p-6 sm:p-7">
+            <div class="flex items-center justify-between">
+                <h2 class="font-display text-2xl font-bold text-white">Operational Logic</h2>
+                <span class="rounded-full border border-ember/25 bg-ember/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-ember">5 live phases</span>
+            </div>
+            <div class="mt-6 space-y-4">
+                {% set phases = [
+                    ('01', 'Onboarding', 'Capture interests, skills, education, and profile links.'),
+                    ('02', 'Opportunity Scan', 'Search, score, and shortlist roles against your profile.'),
+                    ('03', 'Company Intel', 'Research why this company matters right now.'),
+                    ('04', 'Strategy', 'Frame the angle before outreach starts.'),
+                    ('05', 'Cold Email', 'Generate a draft you can actually edit and send.')
+                ] %}
+                {% for code, title, text in phases %}
+                <div class="flex gap-4 rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan/12 font-mono text-sm font-semibold text-cyan">{{ code }}</div>
+                    <div>
+                        <h3 class="font-semibold text-white">{{ title }}</h3>
+                        <p class="mt-1 text-sm leading-6 text-mist">{{ text }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="grid gap-6 sm:grid-cols-3">
+            <div class="panel-shell rounded-[28px] p-5">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">Candidate Model</p>
+                <p class="mt-3 font-display text-3xl font-bold text-white">Virtual Character</p>
+                <p class="mt-2 text-sm leading-6 text-mist">Profile synthesis becomes reusable signal for every downstream phase.</p>
+            </div>
+            <div class="panel-shell rounded-[28px] p-5">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">Approval Gate</p>
+                <p class="mt-3 font-display text-3xl font-bold text-white">Human Control</p>
+                <p class="mt-2 text-sm leading-6 text-mist">The app suggests, scores, and drafts. The user still decides what moves forward.</p>
+            </div>
+            <div class="panel-shell rounded-[28px] p-5">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">Research Layer</p>
+                <p class="mt-3 font-display text-3xl font-bold text-white">Live Context</p>
+                <p class="mt-2 text-sm leading-6 text-mist">Company pages and emails are grounded in external signals, not generic praise.</p>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

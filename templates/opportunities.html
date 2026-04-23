@@ -1,33 +1,82 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto mt-6">
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h2 class="text-3xl font-bold tracking-tight">Opportunity Engine</h2>
-            <p class="text-gray-400 mt-1">Reviewing opportunities matching your virtual character.</p>
+<section class="mx-auto max-w-7xl space-y-6">
+    <div class="grid gap-6 xl:grid-cols-[1fr_0.4fr]">
+        <div class="panel-shell rounded-[32px] p-8 sm:p-10">
+            <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div class="max-w-3xl">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan">Phase 02</p>
+                    <h1 class="mt-3 font-display text-4xl font-bold text-white sm:text-5xl">Scan the market, then approve only what earns your attention.</h1>
+                    <p class="mt-4 text-base leading-7 text-mist">
+                        We translate your profile signal into search queries, rank the matches, and present a compact review board. Nothing progresses until you explicitly approve a target.
+                    </p>
+                </div>
+                <button onclick="fetchOpportunities()" id="search-btn" class="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:bg-cyan">
+                    Scan opportunities
+                </button>
+            </div>
         </div>
-        <button onclick="fetchOpportunities()" id="search-btn" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-semibold transition-all">
-            Scan for Jobs
-        </button>
+
+        <div class="grid gap-6">
+            <div class="panel-shell rounded-[30px] p-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">Discovery Status</p>
+                <div class="mt-4 flex items-center gap-3">
+                    <span class="glow-dot h-3 w-3 rounded-full bg-cyan"></span>
+                    <p class="font-display text-2xl font-bold text-white">Opportunity Engine</p>
+                </div>
+                <p class="mt-3 text-sm leading-6 text-mist">Runs multi-source job search, computes profile fit, and keeps pending roles in your local queue.</p>
+            </div>
+            <div class="panel-shell rounded-[30px] p-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">What approval means</p>
+                <ul class="mt-4 space-y-3 text-sm leading-6 text-mist">
+                    <li>Approve a role to unlock company intelligence.</li>
+                    <li>Reject a role to remove it from the current review surface.</li>
+                    <li>Match score is a directional signal, not a final decision.</li>
+                </ul>
+            </div>
+        </div>
     </div>
 
-    <div id="loading" class="hidden text-center py-20">
-        <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <p class="mt-4 text-gray-400 text-sm">Scanning LinkedIn, Internshala, and Wellfound...</p>
+    <div id="loading" class="panel-shell hidden rounded-[30px] px-8 py-14 text-center">
+        <div class="mx-auto h-14 w-14 animate-spin rounded-full border-[5px] border-cyan/15 border-t-cyan"></div>
+        <p class="mt-5 font-display text-2xl font-bold text-white">Scanning across live sources...</p>
+        <p class="mt-2 text-sm text-mist">Pulling roles, deduplicating listings, and recomputing candidate fit.</p>
     </div>
 
-    <div id="jobs-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Jobs will be rendered here -->
+    <div id="jobs-container" class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        <div class="panel-shell rounded-[30px] p-10 text-center lg:col-span-2 xl:col-span-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.26em] text-mist/70">Queue Empty</p>
+            <h2 class="mt-3 font-display text-3xl font-bold text-white">Run a scan to populate your review board.</h2>
+            <p class="mx-auto mt-3 max-w-xl text-sm leading-7 text-mist">
+                The opportunity engine will search based on your saved onboarding signal and surface the strongest pending matches here.
+            </p>
+        </div>
     </div>
-</div>
+</section>
 
 <script>
+    function safeSkills(value) {
+        if (!value) return [];
+        if (Array.isArray(value)) return value;
+        try {
+            return JSON.parse(value);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function badgeTone(score) {
+        if (score >= 90) return 'border-cyan/30 bg-cyan/10 text-cyan';
+        if (score >= 75) return 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300';
+        return 'border-ember/25 bg-ember/10 text-ember';
+    }
+
     async function fetchOpportunities() {
         const btn = document.getElementById('search-btn');
         const loading = document.getElementById('loading');
         const container = document.getElementById('jobs-container');
-        
+
         btn.disabled = true;
         btn.innerText = 'Scanning...';
         loading.classList.remove('hidden');
@@ -37,75 +86,93 @@
             const res = await fetch('/api/opportunities/search', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({user_id: 1})
+                body: JSON.stringify({})
             });
             const data = await res.json();
-            
+
             loading.classList.add('hidden');
             btn.disabled = false;
-            btn.innerText = 'Scan for Jobs';
+            btn.innerText = 'Scan opportunities';
 
-            if(data.opportunities && data.opportunities.length > 0) {
+            if (data.opportunities && data.opportunities.length > 0) {
                 data.opportunities.forEach(job => {
-                    const card = document.createElement('div');
-                    card.className = 'glass p-6 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-colors group relative overflow-hidden';
+                    const card = document.createElement('article');
+                    card.className = 'panel-shell group rounded-[28px] p-6 transition hover:-translate-y-1 hover:border-cyan/25';
                     card.id = `job-${job.id}`;
-                    
-                    const skillsData = typeof job.required_skills === 'string' ? JSON.parse(job.required_skills) : job.required_skills;
-                    const skillsBadge = (skillsData || []).map(s => 
-                        `<span class="px-2 py-1 bg-blue-900/30 text-blue-300 text-xs rounded-md border border-blue-800/50">${s}</span>`
+
+                    const skillsBadge = safeSkills(job.required_skills).slice(0, 6).map(skill =>
+                        `<span class="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1 text-xs text-white/85">${skill}</span>`
                     ).join('');
 
                     card.innerHTML = `
-                        <div class="absolute top-0 right-0 p-4">
-                            <div class="flex items-center gap-1 text-xs font-bold ${job.match_score > 90 ? 'text-green-400' : 'text-yellow-400'}">
-                                <span>${job.match_score}% Match</span>
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-mist/65">${job.source_platform || 'Source'}</p>
+                                <h3 class="mt-3 font-display text-2xl font-bold text-white">${job.designation}</h3>
+                                <p class="mt-2 text-sm text-mist">${job.company_name} • ${job.location || 'Location not specified'}</p>
+                            </div>
+                            <div class="rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] ${badgeTone(job.match_score || 0)}">
+                                ${job.match_score || 0}% Match
                             </div>
                         </div>
-                        <h3 class="text-xl font-bold mb-1 group-hover:text-blue-400 transition-colors">${job.designation}</h3>
-                        <div class="text-gray-400 text-sm mb-4 flex items-center gap-2">
-                            <span>${job.company_name}</span> &bull; <span>${job.location}</span>
+
+                        <p class="mt-5 min-h-[120px] text-sm leading-7 text-mist">${job.description_summary || 'No summary available for this opportunity yet.'}</p>
+
+                        <div class="mt-5 flex flex-wrap gap-2">
+                            ${skillsBadge || '<span class="text-xs text-mist/70">No skill tags returned</span>'}
                         </div>
-                        <p class="text-sm text-gray-300 mb-4 line-clamp-2">${job.description_summary}</p>
-                        <div class="flex flex-wrap gap-2 mb-6">
-                            ${skillsBadge}
-                        </div>
-                        <div class="flex gap-2 border-t border-gray-800 pt-4">
-                            <button onclick="approveJob(${job.id}, 'Y')" class="flex-1 py-2 bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-green-800/50">
-                                Approve
-                            </button>
-                            <button onclick="approveJob(${job.id}, 'N')" class="flex-1 py-2 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg text-sm font-medium transition-colors border border-red-800/50">
+
+                        <div class="mt-6 grid grid-cols-2 gap-3 border-t border-white/8 pt-5">
+                            <button onclick="approveJob(${job.id}, 'N')" class="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white transition hover:border-coral/30 hover:bg-coral/10 hover:text-coral">
                                 Reject
+                            </button>
+                            <button onclick="approveJob(${job.id}, 'Y')" class="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-ink transition hover:bg-cyan">
+                                Approve & inspect
                             </button>
                         </div>
                     `;
+
                     container.appendChild(card);
                 });
             } else {
-                container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">No new opportunities found matching your profile.</div>';
+                container.innerHTML = `
+                    <div class="panel-shell rounded-[30px] p-10 text-center lg:col-span-2 xl:col-span-3">
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-mist/70">No Matches</p>
+                        <h2 class="mt-3 font-display text-3xl font-bold text-white">Nothing strong surfaced in this scan.</h2>
+                        <p class="mx-auto mt-3 max-w-xl text-sm leading-7 text-mist">Try a fresh onboarding profile, a different role direction, or run another scan later when new postings are available.</p>
+                    </div>
+                `;
             }
         } catch (e) {
             console.error(e);
             loading.classList.add('hidden');
             btn.disabled = false;
-            btn.innerText = 'Scan for Jobs';
+            btn.innerText = 'Scan opportunities';
+            container.innerHTML = `
+                <div class="panel-shell rounded-[30px] p-10 text-center lg:col-span-2 xl:col-span-3">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-coral">Search Error</p>
+                    <h2 class="mt-3 font-display text-3xl font-bold text-white">The opportunity engine hit a network issue.</h2>
+                    <p class="mx-auto mt-3 max-w-xl text-sm leading-7 text-mist">Check the terminal output or retry the scan in a moment.</p>
+                </div>
+            `;
         }
     }
 
     async function approveJob(jobId, decision) {
-        document.getElementById(`job-${jobId}`).style.opacity = '0.5';
-        document.getElementById(`job-${jobId}`).style.pointerEvents = 'none';
+        const card = document.getElementById(`job-${jobId}`);
+        card.style.opacity = '0.45';
+        card.style.pointerEvents = 'none';
 
         await fetch('/api/opportunities/approve', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({opportunity_id: jobId, decision: decision})
+            body: JSON.stringify({ opportunity_id: jobId, decision: decision })
         });
 
-        if(decision === 'Y') {
+        if (decision === 'Y') {
             window.location.href = `/company/${jobId}`;
         } else {
-            document.getElementById(`job-${jobId}`).style.display = 'none';
+            card.style.display = 'none';
         }
     }
 </script>

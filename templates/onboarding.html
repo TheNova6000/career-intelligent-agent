@@ -1,61 +1,104 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto mt-10">
-    <div class="glass p-8 md:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-        
-        <h2 class="text-3xl font-bold mb-2 tracking-tight">Phase 1: Profile Intelligence</h2>
-        <p class="text-gray-400 mb-8 text-sm md:text-base">Let's build your virtual character. The system needs to understand your ambitions.</p>
-        
-        <div id="chat-container" class="space-y-6 mb-8 h-[400px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-700">
-            <!-- Messages injected here -->
+<section class="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[0.4fr_1fr]">
+    <aside class="space-y-6">
+        <div class="panel-shell rounded-[30px] p-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan">Phase 01</p>
+            <h1 class="mt-3 font-display text-3xl font-bold text-white">Profile Intelligence</h1>
+            <p class="mt-4 text-sm leading-7 text-mist">
+                We’re building a reusable candidate model from your interests, work samples, education, and public links. The better the signal here, the better the opportunity and outreach layers become.
+            </p>
         </div>
 
-        <div class="flex gap-3 relative">
-            <input type="text" id="user-input" 
-                class="flex-grow bg-darkPanel/50 border border-gray-700 rounded-xl px-5 py-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" 
-                placeholder="Type your response here..."
-                onkeypress="if(event.key === 'Enter') sendMessage()">
-            <button onclick="sendMessage()" 
-                class="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all hover:shadow-[0_0_20px_-5px_rgba(59,130,246,0.5)]">
-                Send
-            </button>
+        <div class="panel-shell rounded-[30px] p-6">
+            <div class="flex items-center justify-between">
+                <h2 class="font-display text-xl font-bold text-white">Sequence</h2>
+                <span id="step-indicator" class="rounded-full border border-cyan/20 bg-cyan/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan">Step 1 / 4</span>
+            </div>
+            <div class="mt-5 space-y-3">
+                <div class="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-mist/70">01 Interest Signal</p>
+                    <p class="mt-2 text-sm text-white/90">Roles, domains, companies, location, and work mode.</p>
+                </div>
+                <div class="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-mist/70">02 Capability Layer</p>
+                    <p class="mt-2 text-sm text-white/90">Projects, technical skills, internships, and proof of work.</p>
+                </div>
+                <div class="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-mist/70">03 Education Frame</p>
+                    <p class="mt-2 text-sm text-white/90">College, degree, year, marks, and academic context.</p>
+                </div>
+                <div class="rounded-2xl border border-white/6 bg-white/[0.03] p-4">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-mist/70">04 Link Surface</p>
+                    <p class="mt-2 text-sm text-white/90">GitHub, LinkedIn, resume, portfolio, and contact details.</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="panel-shell rounded-[34px] overflow-hidden">
+        <div class="signal-line h-[2px] w-full"></div>
+        <div class="p-6 sm:p-8 lg:p-10">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.26em] text-mist/70">Conversational Intake</p>
+                    <h2 class="mt-3 font-display text-3xl font-bold text-white sm:text-4xl">Tell the system who you are before it searches for you.</h2>
+                </div>
+                <div class="rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3 text-sm text-mist">
+                    No rigid forms. Natural input. One step at a time.
+                </div>
+            </div>
+
+            <div id="chat-container" class="scrollbar-thin mt-8 h-[430px] space-y-5 overflow-y-auto pr-3">
+                <!-- Messages injected here -->
+            </div>
+
+            <div class="mt-8 rounded-[28px] border border-white/8 bg-black/20 p-4 sm:p-5">
+                <div class="flex flex-col gap-3 sm:flex-row">
+                    <input type="text" id="user-input"
+                        class="min-h-[60px] flex-1 rounded-2xl border border-white/8 bg-white/[0.04] px-5 py-4 text-sm text-white placeholder:text-mist/60 focus:border-cyan/35 focus:outline-none focus:ring-2 focus:ring-cyan/15"
+                        placeholder="Write naturally. You can answer in a sentence or a compact list."
+                        onkeypress="if(event.key === 'Enter') sendMessage()">
+                    <button id="send-button" onclick="sendMessage()"
+                        class="inline-flex min-h-[60px] items-center justify-center rounded-2xl bg-white px-8 py-4 text-sm font-semibold text-ink transition hover:bg-cyan">
+                        Send signal
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-
-<style>
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
-</style>
+</section>
 
 <script>
     let currentStep = 1;
     let isSubmitting = false;
+
+    function updateStepIndicator(step) {
+        document.getElementById('step-indicator').innerText = `Step ${Math.min(step, 4)} / 4`;
+    }
 
     function addMessage(sender, text) {
         const chat = document.getElementById('chat-container');
         const isAgent = sender === 'Agent';
         const msgWrapper = document.createElement('div');
         msgWrapper.className = `flex ${isAgent ? 'justify-start' : 'justify-end'} opacity-0 translate-y-4 transition-all duration-500 ease-out`;
-        
+
         const bubble = document.createElement('div');
-        bubble.className = `p-5 rounded-2xl max-w-[85%] text-sm leading-relaxed ${
-            isAgent 
-            ? 'bg-blue-900/20 border border-blue-500/20 text-blue-50 rounded-tl-sm' 
-            : 'bg-gray-800 text-gray-100 rounded-tr-sm border border-gray-700'
+        bubble.className = `max-w-[88%] rounded-[24px] border p-5 text-sm leading-7 ${
+            isAgent
+            ? 'border-cyan/18 bg-cyan/8 text-white rounded-tl-md'
+            : 'border-white/8 bg-white/[0.05] text-white rounded-tr-md'
         }`;
-        
-        bubble.innerHTML = `<div class="font-semibold mb-1 text-xs uppercase tracking-wider ${isAgent ? 'text-blue-400' : 'text-gray-400'}">${sender}</div> <div>${text}</div>`;
-        
+
+        bubble.innerHTML = `
+            <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] ${isAgent ? 'text-cyan' : 'text-mist/70'}">${sender}</div>
+            <div>${text}</div>
+        `;
+
         msgWrapper.appendChild(bubble);
         chat.appendChild(msgWrapper);
-        
-        // Trigger reflow for animation
+
         setTimeout(() => {
             msgWrapper.classList.remove('opacity-0', 'translate-y-4');
         }, 50);
@@ -63,8 +106,8 @@
         chat.scrollTop = chat.scrollHeight;
     }
 
-    // Initial load
     window.onload = () => {
+        updateStepIndicator(currentStep);
         addMessage('Agent', "What kind of internships are you looking for? Tell me the roles, domains, or companies you're excited about — and why. Also, what city or work mode (remote/hybrid/on-site) works for you?");
     };
 
@@ -72,23 +115,27 @@
         if (isSubmitting) return;
 
         const inputField = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
         const text = inputField.value.trim();
         if(!text) return;
-        
+
         addMessage('You', text);
         inputField.value = '';
         inputField.disabled = true;
+        sendButton.disabled = true;
+        sendButton.innerText = 'Processing...';
         isSubmitting = true;
 
-        // Typing indicator
         const typingId = 'typing-' + Date.now();
         const chat = document.getElementById('chat-container');
         const typingDiv = document.createElement('div');
         typingDiv.id = typingId;
         typingDiv.className = 'flex justify-start';
-        typingDiv.innerHTML = `<div class="p-4 bg-blue-900/10 border border-blue-500/10 rounded-2xl rounded-tl-sm text-blue-400 text-xs flex gap-1">
-            <span class="animate-bounce">•</span><span class="animate-bounce delay-100">•</span><span class="animate-bounce delay-200">•</span>
-        </div>`;
+        typingDiv.innerHTML = `
+            <div class="rounded-[20px] border border-cyan/16 bg-cyan/8 px-4 py-3 text-xs text-cyan">
+                Synthesizing signal...
+            </div>
+        `;
         chat.appendChild(typingDiv);
         chat.scrollTop = chat.scrollHeight;
 
@@ -97,14 +144,16 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({step: currentStep, input: text})
         });
-        
+
         document.getElementById(typingId).remove();
-        
+
         const data = await response.json();
 
         if (!response.ok) {
             addMessage('Agent', data.error || 'Unable to continue onboarding right now.');
             inputField.disabled = false;
+            sendButton.disabled = false;
+            sendButton.innerText = 'Send signal';
             inputField.focus();
             isSubmitting = false;
             return;
@@ -113,8 +162,9 @@
         addMessage('Agent', data.response);
 
         if (data.completed) {
+            updateStepIndicator(4);
             setTimeout(async () => {
-                addMessage('Agent', 'Synthesizing your virtual character from all sources (LinkedIn, GitHub, Resume)...');
+                addMessage('Agent', 'Profile signal complete. Synthesizing your candidate model from the full conversation...');
                 const synRes = await fetch('/api/onboarding/synthesize', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'}
@@ -124,21 +174,26 @@
                 if (!synRes.ok) {
                     addMessage('Agent', synData.error || 'Profile synthesis failed.');
                     inputField.disabled = false;
+                    sendButton.disabled = false;
+                    sendButton.innerText = 'Send signal';
                     inputField.focus();
                     isSubmitting = false;
                     return;
                 }
 
-                addMessage('Agent', 'Synthesis complete! Redirecting you to opportunities...');
+                addMessage('Agent', 'Virtual character locked. Routing you to opportunity discovery...');
                 setTimeout(() => {
                     window.location.href = data.redirect_url || '/opportunities';
-                }, 800);
-            }, 1500);
+                }, 900);
+            }, 1300);
             return;
         }
 
         currentStep = data.next_step || (currentStep + 1);
+        updateStepIndicator(currentStep);
         inputField.disabled = false;
+        sendButton.disabled = false;
+        sendButton.innerText = 'Send signal';
         inputField.focus();
         isSubmitting = false;
     }
