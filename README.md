@@ -1,333 +1,472 @@
-# Career Intelligence Agent (CIA)
+# Career Intelligence Agent
 
-> *An autonomous, end-to-end career pipeline that replaces fragmented job hunting with a single intelligent assembly line — from who you are, to the perfect cold email.*
+Career Intelligence Agent is a local-first Flask app for turning messy job hunting into a guided pipeline:
+
+1. understand the candidate through conversational onboarding
+2. search and score opportunities
+3. let the user approve targets
+4. research approved companies
+5. generate a personalized cold email draft
+
+The project is built as a sequence of human-approved phases instead of a single chatbot prompt. It keeps data in local SQLite, renders simple server-side pages with Jinja, and uses external AI/search APIs only where they add leverage.
 
 ---
 
-## What is this?
+## Core Idea
 
-Most "AI job tools" are glorified resume parsers or chatbots that spit out generic cover letters. The Career Intelligence Agent is something different.
+Most job tools do one isolated thing:
+- parse a resume
+- search jobs
+- draft a generic message
 
-It's a **6-phase autonomous pipeline** that:
-1. Learns who you are through a conversational onboarding flow and synthesizes a **Virtual Character** — a JSON persona that captures your tone, writing style, strengths, and differentiators.
-2. Scrapes live job listings, scores them by relevance, and presents them through a **Tinder-style approval UI** — you swipe yes/no before anything moves forward.
-3. **Deep-researches every approved company** using live web search — blog posts, engineering articles, recent hires, GitHub repos — to understand where they're headed, not just what they advertise.
-4. Runs a **skill-gap analysis** by comparing your Virtual Character against company intelligence, then gives you concrete action items (mini-projects to build, technologies to study).
-5. Generates a **hyper-personalised cold email** using a two-pass LLM system — first draft using your persona + company context, second pass self-reviewing against a strict quality checklist.
-6. Lets you review, edit, and send — entirely your call, every time.
+This project treats career outreach as a connected system.
 
-No templates. No filler. Every output is specific to you and to that company.
+Each stage enriches the next one:
+- onboarding captures intent, strengths, education, and links
+- opportunity discovery uses that profile to search and rank roles
+- company research adds real-world context for a specific target
+- email generation uses both candidate context and company context
+
+The result is not meant to be fully autonomous. It is meant to be context-rich, opinionated, and human-controlled.
 
 ---
 
 ## System Philosophy
 
-### The Assembly Line Approach
+### 1. Human-in-the-loop by default
 
-Traditional job hunting is a context-switching nightmare: LinkedIn tab, company website tab, email client, resume editor, repeat. Information lives in silos. Every email starts from scratch.
+The app does not auto-apply or auto-send. The user approves opportunities, reviews research, and decides whether to use the email draft.
 
-The CIA treats job searching as a **manufacturing pipeline**. Each phase enriches the context passed to the next. By the time you reach email generation, the system holds:
+### 2. Local-first state
 
-- Your complete professional identity (Virtual Character)
-- Verified, approved job targets
-- Deep intelligence on each company's current trajectory
-- A gap analysis telling you exactly what to highlight or fix
-- A self-reviewed email draft tailored to that company's specific moment
+Candidate data, opportunities, company reports, and generated artifacts live in a local SQLite database. This keeps the project easy to run and easy to inspect.
 
-The result is outreach that reads like it was written by someone who already works there.
+### 3. Phase-based intelligence
 
-### The Virtual Character
+Instead of asking one model to do everything at once, the system breaks the workflow into clear phases with narrower prompts and clearer data contracts.
 
-The central innovation is the **Virtual Character** — a structured JSON persona built from your conversational onboarding, LinkedIn tone analysis, and GitHub project fingerprint. It captures:
+### 4. Pragmatic AI usage
 
-- Your writing tone (formal / technical / warm / conversational)
-- Core skills and domain interests
-- Project highlights with contextual framing
-- Unique differentiators — things that make you *you*, not every other candidate
-- Academic snapshot and contact information
+LLMs are used where summarization, synthesis, or rewriting help:
+- onboarding profile synthesis
+- domain/query expansion
+- company research summarization
+- cold email drafting and review
 
-Every downstream phase references this character. The company research is filtered through it. The skill gap is measured against it. The email is *written in its voice*.
+Traditional application logic handles:
+- routing
+- persistence
+- scoring
+- page flow
+- approval state
 
-### Human-in-the-Loop by Design
+### 5. Graceful degradation
 
-The agent is powerful but never autonomous about things that matter. There are three intentional gates where it stops and waits for you:
-
-1. **Job approval** — you review and approve each listing before research begins
-2. **Pre-email review** — you see the company dossier and action brief before committing to outreach
-3. **Email send** — the agent drafts; you review, edit, and trigger
-
-Nothing goes out without your explicit approval.
+The app is designed to keep moving when external APIs are rate-limited or unavailable. In practice, some screens may produce partial/fallback output if an AI provider fails.
 
 ---
 
-## Architecture
+## Current Product Flow
 
-```
-career-intelligent-agent/
-│
-├── app.py                  # Flask app factory — registers blueprints, inits DB
-├── database.py             # SQLite schema init — users, jobs, companies, emails
-├── requirements.txt        # Python dependencies
-├── setup.sh                # One-command setup script (macOS/Linux)
-│
+### Phase 1: Onboarding
+
+The user goes through a conversational flow in [`templates/onboarding.html`](./templates/onboarding.html).
+
+The backend route [`/api/onboarding/step`](./routes/api_routes.py) stores data across four steps:
+- interests and preferred work mode/location
+- skills, projects, experience
+- education
+- GitHub, LinkedIn, resume, contact details
+
+Then [`/api/onboarding/synthesize`](./routes/api_routes.py) builds a `virtual_character` profile from the collected data.
+
+### Phase 2: Opportunity Discovery
+
+The user lands on [`templates/opportunities.html`](./templates/opportunities.html) and triggers a search.
+
+The main search logic lives in [`services/phase2_opportunities.py`](./services/phase2_opportunities.py), which:
+- builds search queries from the candidate profile or a direct query
+- optionally expands vague domains with an LLM
+- fetches jobs through [`utils/job_aggregator_client.py`](./utils/job_aggregator_client.py)
+- computes match scores
+- stores/upserts pending opportunities in SQLite
+
+### Phase 3: Company Intelligence
+
+After approving an opportunity, the company screen [`templates/company.html`](./templates/company.html) calls [`/api/company/report/<opp_id>`](./routes/api_routes.py).
+
+The report logic in [`services/phase3_company_intel.py`](./services/phase3_company_intel.py):
+- finds the selected company
+- gathers real-time context via Tavily
+- asks the LLM to produce a structured company report
+- stores that report in the database
+
+### Phase 4: Application Strategy
+
+The application strategy page exists in [`templates/application.html`](./templates/application.html). It is part of the intended flow and can be expanded further, but today the strongest implemented behavior is the transition from company research into cold email generation.
+
+### Phase 5: Cold Email Drafting
+
+The cold email screen [`templates/cold_email.html`](./templates/cold_email.html) calls [`/api/email/draft/<opp_id>`](./routes/api_routes.py).
+
+The logic in [`services/phase4_email.py`](./services/phase4_email.py):
+- loads the candidate profile
+- loads the latest company report
+- asks the LLM for an initial cold email draft
+- runs a second review prompt to improve it
+
+### Phase 6: Future Scope
+
+The project hints at later workflow automation, but the current repo is centered on:
+- onboarding
+- opportunity discovery
+- company research
+- email drafting
+
+---
+
+## Real Architecture
+
+This is the current repo structure that matters most:
+
+```text
+job-agent/
+├── app.py
+├── database.py
+├── requirements.txt
 ├── routes/
-│   ├── web_routes.py       # Page routes — renders HTML templates
-│   └── api_routes.py       # REST API endpoints — called by frontend JS
-│
-├── services/               # Business logic layer
-│   ├── llm_service.py      # OpenRouter / Gemini API wrapper — all LLM calls
-│   ├── tavily_service.py   # Tavily REST API wrapper — live web search
-│   ├── scraper_service.py  # Job listing aggregation engine
-│   └── email_service.py    # Two-pass email generation + mailto builder
-│
-├── templates/              # Jinja2 HTML templates (Tailwind CSS via CDN)
-│   ├── index.html          # Landing / onboarding chat
-│   ├── discovery.html      # Tinder-style job approval UI
-│   ├── company.html        # Company intelligence dashboard
-│   ├── strategy.html       # Skill gap + action brief
-│   └── email.html          # Email review and send UI
-│
+│   ├── api_routes.py
+│   └── web_routes.py
+├── services/
+│   ├── phase1_onboarding.py
+│   ├── phase2_opportunities.py
+│   ├── phase3_company_intel.py
+│   └── phase4_email.py
+├── templates/
+│   ├── application.html
+│   ├── base.html
+│   ├── cold_email.html
+│   ├── company.html
+│   ├── dashboard.html
+│   ├── landing.html
+│   ├── onboarding.html
+│   └── opportunities.html
 └── utils/
-    ├── character.py        # Virtual Character synthesis from raw profile data
-    └── scorer.py           # Job relevance scoring against Virtual Character
+    ├── github_client.py
+    ├── job_aggregator_client.py
+    ├── llm_client.py
+    ├── tavily_client.py
+    └── theirstack_client.py
+```
+
+### Entry point
+
+[`app.py`](./app.py) creates the Flask app, loads environment variables, initializes the database, and registers the web/API blueprints.
+
+### Web routes
+
+[`routes/web_routes.py`](./routes/web_routes.py) serves the HTML pages:
+- `/`
+- `/login`
+- `/dashboard`
+- `/onboarding`
+- `/opportunities`
+- `/company/<opp_id>`
+- `/application/<opp_id>`
+- `/cold_email/<opp_id>`
+
+### API routes
+
+[`routes/api_routes.py`](./routes/api_routes.py) handles JSON endpoints for:
+- onboarding steps and synthesis
+- opportunity search and approval
+- company reports
+- email drafts
+- user switching
+
+Compatibility endpoints are included so the current frontend templates keep working while the backend evolves.
+
+### Service layer
+
+The `services/` directory contains the business logic for each major workflow phase. These modules are where most of the product behavior lives.
+
+### Utility layer
+
+The `utils/` directory wraps external providers and helper integrations such as:
+- GitHub profile extraction
+- LLM access
+- Tavily search
+- job source aggregation
+
+---
+
+## Data Model
+
+SQLite is initialized by [`database.py`](./database.py).
+
+The app currently relies on tables for:
+- users
+- opportunities
+- company reports
+- GitHub-related data
+
+The onboarding flow updates existing user columns rather than requiring schema changes for each iteration.
+
+Key persisted concepts:
+- `users.virtual_character`
+- `users.preferred_roles`
+- `users.preferred_location`
+- `users.preferred_stack`
+- `users.degree`
+- pending/approved/rejected opportunities
+- company intelligence reports
+
+---
+
+## Request Flow
+
+### Onboarding flow
+
+```text
+GET /onboarding
+  -> onboarding.html
+  -> POST /api/onboarding/step (x4)
+  -> POST /api/onboarding/synthesize
+  -> redirect to /opportunities
+```
+
+### Opportunity flow
+
+```text
+GET /opportunities
+  -> opportunities.html
+  -> POST /api/opportunities/search
+  -> POST /api/opportunities/approve
+  -> redirect to /company/<opp_id>
+```
+
+### Research + email flow
+
+```text
+GET /company/<opp_id>
+  -> GET /api/company/report/<opp_id>
+  -> proceed to /application/<opp_id>
+  -> proceed to /cold_email/<opp_id>
+  -> POST /api/email/draft/<opp_id>
 ```
 
 ---
 
-## The 6 Phases
+## AI and Search Dependencies
 
-### Phase 1 — User Profile Intelligence
+The app currently integrates with multiple external providers.
 
-**Goal:** Build the Virtual Character.
+### LLM providers
 
-The user enters an LLM-driven conversational onboarding flow — no boring forms. The agent asks about career goals, education, projects, skills, and preferred work style. It also ingests LinkedIn and GitHub URLs, extracting tone, writing style, project descriptions, and technology fingerprints.
+The LLM wrapper in [`utils/llm_client.py`](./utils/llm_client.py) is used by:
+- onboarding synthesis
+- query/domain expansion
+- company intelligence generation
+- cold email generation
 
-All of this is synthesised into a `virtual_character` JSON object and stored in SQLite. This object is the soul of everything that follows.
+The current setup attempts provider fallback, but behavior depends on provider quotas and SDK compatibility.
 
-**What gets captured:**
-- Target roles, domains, preferred locations
-- Education — degree, institution, grades, scores
-- Top projects — problem, stack, outcome
-- Writing tone extracted from LinkedIn posts
-- Technologies and commit patterns from GitHub
-- Contact details, resume data, personal links
+### Search / aggregation providers
 
----
+The app uses:
+- Tavily for company context and real-time research
+- JSearch / Remotive / related sources through `job_aggregator_client.py`
 
-### Phase 2 — Opportunity Discovery
+### Important operational note
 
-**Goal:** Find and approve the right jobs.
-
-A scraping engine aggregates internship and job listings from configured sources. Each listing is scored 0–100 for relevance against the Virtual Character's skills, domain interests, and location preferences. Only listings above a threshold are surfaced.
-
-The user sees them one at a time through a **Tinder-style card UI** (built with Tailwind CSS): company name, designation, location, stipend, required skills, match score. Respond Y / N / maybe. Only approved listings advance.
+If OpenRouter is rate-limited or another provider fails, parts of the workflow may still return a `200` response with fallback or incomplete data. This is a product limitation to keep in mind during demos and testing.
 
 ---
 
-### Phase 3 — Company Intelligence Engine
+## Setup
 
-**Goal:** Understand each company's current trajectory.
-
-For every approved company, the agent performs live research via the **Tavily Search API** — company blog posts (last 6 months), engineering articles, recent GitHub activity, job description signals, founder social media, and product announcements.
-
-The result is a structured **Company Intelligence Document** covering:
-- Current product focus and recent feature launches
-- Technologies in use and technologies they're moving toward
-- Open source repos and what they reveal about technical direction
-- Repeated skills in recent job descriptions (hiring signals)
-- Culture and values signals from public content
-
----
-
-### Phase 4 — Application Strategy & Skill Gap Analysis
-
-**Goal:** Tell you exactly what to do before writing a single word.
-
-The LLM compares the Virtual Character against the Company Intelligence Document to identify:
-
-- **Skill overlaps** — what you already have that they care about
-- **Skill gaps** — what they're looking for that you haven't demonstrated
-- **Suggested mini-projects** — 1–2 small, buildable things using their actual stack that would signal genuine interest
-- **Learning recommendations** — specific docs, papers, or courses to skim before outreach
-- **Talking points** — 2–3 things to reference in the email that show you understand the company's direction
-
-A **Candidate Action Brief** is shown to the user before Phase 5. You can act on it first — build the mini-project, do the reading — or proceed immediately. Your choice.
-
----
-
-### Phase 5 — Personalised Cold Email Engine
-
-**Goal:** Write an email that sounds like you wrote it, for this company, right now.
-
-This is the most technically interesting phase. It uses a **two-pass LLM system**:
-
-**Pass 1 — Draft generation.** The LLM receives the full Virtual Character, Company Intelligence Document, the Candidate Action Brief, and a strict writing prompt. Rules include: opening must reference one specific recent thing the company shipped; paragraph 2 must connect the candidate's most relevant project directly to the company's tech direction; offer something concrete in paragraph 3; no filler phrases ("passionate", "quick learner", "team player"); 180–220 words maximum; tone must match `virtual_character.tone`.
-
-**Pass 2 — Self-review.** The draft is fed back to the LLM with a checklist: Does the opening reference something specific? Does the project connection feel genuine? Is it under 220 words? Does it avoid all filler? Does it end with a clear, low-pressure ask? If any check fails, that section is rewritten.
-
-The user gets the final draft in an **editable review UI**. They can modify freely. When satisfied, a `mailto:` link fires it into their local mail client — no email credentials stored anywhere, no automated sending.
-
----
-
-### Phase 6 — Application Tracking *(Future Scope)*
-
-- Automated application form filling
-- Follow-up scheduling and nudge system
-- Response rate analytics
-- Feedback loop: which email patterns convert to replies
-
----
-
-## Tech Stack
-
-| Layer | Technology | Notes |
-|---|---|---|
-| Backend | Python 3.10+, Flask | Blueprints for web + API routes |
-| Database | SQLite3 | Zero-config, local, no server needed |
-| Frontend | HTML5, Vanilla JS | No framework overhead |
-| Styling | Tailwind CSS (CDN) | No build step required |
-| LLM | OpenRouter API | Free tier available — see below |
-| LLM (alt) | Google Gemini SDK | Gemini Flash is free-tier |
-| Live Search | Tavily Search API | Free tier: 1,000 searches/month |
-
----
-
-## Free APIs — No Cost to Get Started
-
-You can run this entire project on **$0/month** using free tiers:
-
-| Service | Free Tier | Get Key |
-|---|---|---|
-| **OpenRouter** | Free models available (`mistralai/mistral-7b-instruct:free`, `google/gemma-2-9b-it:free`, and more) | [openrouter.ai/keys](https://openrouter.ai/keys) |
-| **Google Gemini** | Gemini 1.5 Flash — 15 RPM, 1M TPD free | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **Tavily Search** | 1,000 API calls/month free | [tavily.com](https://tavily.com) |
-| **GitHub API** | 60 unauthenticated requests/hour (5,000 with token) | [github.com/settings/tokens](https://github.com/settings/tokens) |
-| **SQLite** | Completely free, built into Python | No signup |
-
-The `.env.example` file uses OpenRouter + Tavily as defaults. Swap in Gemini at any time by changing one line in `services/llm_service.py`.
-
----
-
-## Setup & Installation
-
-### Prerequisites
+### Requirements
 
 - Python 3.10+
-- Git
-- API keys for OpenRouter (or Gemini) + Tavily
+- pip
+- a virtual environment
+- API keys for the services you actually want to use
 
-### macOS / Linux
-
-```bash
-# 1. Clone
-git clone https://github.com/TheNova6000/career-intelligent-agent.git
-cd career-intelligent-agent
-
-# 2. Virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Configure environment
-cp .env.example .env
-# Open .env and fill in OPEN_ROUTER and TAVILY_API_KEY
-
-# 5. Init database and run
-python database.py
-python app.py
-```
-
-### Windows
+### Install
 
 ```bash
-# 1. Clone
-git clone https://github.com/TheNova6000/career-intelligent-agent.git
-cd career-intelligent-agent
-
-# 2. Virtual environment
+git clone <your-repo-url>
+cd job-agent
 python -m venv venv
+```
+
+On Windows:
+
+```powershell
 venv\Scripts\activate
-
-# 3. Install dependencies
 pip install -r requirements.txt
-
-# 4. Configure environment
 copy .env.example .env
-# Open .env in Notepad or VS Code and fill in your keys
+```
 
-# 5. Init database and run
-python database.py
+On macOS/Linux:
+
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Then edit `.env` with your real keys.
+
+### Run
+
+```bash
 python app.py
 ```
 
-App runs at **http://127.0.0.1:5001**
+App URL:
 
-### Environment Variables
+```text
+http://127.0.0.1:5001
+```
+
+The database is initialized automatically on startup.
+
+---
+
+## Environment Variables
+
+See [`.env.example`](./.env.example) for the latest template.
+
+Typical variables:
 
 ```env
-# .env
-
-OPEN_ROUTER=your_openrouter_api_key_here
-TAVILY_API_KEY=your_tavily_api_key_here
-
-# Optional — only needed if using Gemini instead of OpenRouter
-GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_API_KEY=your_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
+OPEN_ROUTER=your_openrouter_api_key
+TAVILY_API_KEY=your_tavily_api_key
+GITHUB_TOKEN=your_github_token
+THEIRSTACK_API_KEY=your_theirstack_api_key
+JSEARCH_API_KEY=your_jsearch_api_key
+ADZUNA_APP_ID=your_adzuna_app_id
+ADZUNA_APP_KEY=your_adzuna_app_key
+FLASK_APP=app.py
+FLASK_ENV=development
+FLASK_SECRET_KEY=replace_with_a_strong_secret_key
 ```
 
 ---
 
-## Note on Python Compatibility
+## Multi-user and Session Behavior
 
-If you're running Python 3.14+ (early alpha builds), you may hit C-compilation errors from packages like `playwright` or the native `google-generativeai` SDK.
+The app now uses session-based user selection for the active browser session.
 
-This project is specifically built to avoid those issues — it uses **REST APIs everywhere** (Tavily HTTP API instead of the native SDK, `requests` for all LLM calls). There are no packages that require native C-extension compilation. It runs cleanly on Python 3.10 through 3.13 and on current 3.14 alphas.
+Important behavior:
+- visiting `/onboarding` without an active session user creates a fresh user profile
+- `/login` creates a new test/profile user
+- `/dashboard` lets you inspect and switch between saved users
+- API endpoints use `session["user_id"]` instead of trusting a posted `user_id`
 
----
-
-## How It's Different From Other Tools
-
-| | CIA | Generic AI Resume Tools | Job Boards |
-|---|---|---|---|
-| Learns your actual tone | ✅ Virtual Character synthesis | ❌ Generic templates | ❌ |
-| Live company research | ✅ Tavily real-time search | ❌ Static data | ❌ |
-| Skill gap analysis | ✅ Per-company, actionable | ❌ | ❌ |
-| Two-pass email review | ✅ Draft + self-critique | ❌ | ❌ |
-| Human-in-the-loop gates | ✅ 3 mandatory approval points | ❌ | ❌ |
-| Zero external data storage | ✅ Local SQLite only | ❌ Usually cloud | ❌ |
-| Free to run | ✅ All free-tier APIs | ❌ Most are paid | ✅ |
+This was added to stop different onboarding runs from mixing data into a single profile.
 
 ---
 
-## Roadmap
+## What Is Working Now
 
-- [x] Phase 1 — Conversational onboarding + Virtual Character synthesis
-- [x] Phase 2 — Job discovery + approval UI
-- [x] Phase 3 — Company intelligence via Tavily
-- [x] Phase 4 — Skill gap analysis + Candidate Action Brief
-- [x] Phase 5 — Two-pass personalised email generation
-- [ ] Phase 6 — Application form auto-fill
-- [ ] Follow-up scheduler and nudge system
-- [ ] Analytics dashboard — reply rate, open rate by strategy
-- [ ] LinkedIn profile data extraction (authenticated)
-- [ ] Hackathon and research opportunity discovery
-- [ ] Multi-user support (currently single-user local setup)
+Based on the current codebase and recent testing, the following path works:
+
+- onboarding step progression
+- virtual character synthesis
+- opportunity search
+- opportunity approval
+- company report generation
+- transition into application and cold email pages
+
+The app also includes compatibility endpoints so older frontend fetch calls still resolve correctly.
 
 ---
 
-## Contributing
+## Known Limitations
 
-Pull requests are welcome. For significant changes, open an issue first to discuss the direction.
+### 1. External AI limits affect output quality
 
-If you're extending the scraping engine (Phase 2), note that LinkedIn blocks most scrapers — the current implementation uses a mockable engine by design. For production scraping, Apify's LinkedIn actor or Proxycurl are the practical options.
+If OpenRouter is rate-limited or another provider fails, downstream phases may:
+- fall back to another provider
+- return weaker output
+- show blank or partial content if the fallback does not match the expected schema
+
+### 2. Cold email generation is only as strong as the model response
+
+The cold email path currently assumes structured JSON from the model. If the provider fails or returns malformed output, the UI may not show a complete draft.
+
+### 3. Company reports are regenerated on demand
+
+The current company report path can re-run the intelligence step when revisiting a company page instead of aggressively caching and reusing reports.
+
+### 4. The application strategy phase is lighter than the other phases
+
+The repo includes an application page in the flow, but the deepest implemented logic today is around company research and email generation.
+
+### 5. This is still a local prototype
+
+The app is not production-hardened. It is optimized for:
+- experimentation
+- demos
+- local iteration
+
+Not for:
+- secure multi-tenant deployment
+- background workers
+- production email delivery
+
+---
+
+## Why This Project Is Interesting
+
+This project is more than a job board wrapper. Its interesting design idea is the pipeline:
+
+- candidate context is collected once
+- approvals happen at the right moments
+- research is tied to a chosen opportunity
+- generated outreach is grounded in both self-context and company-context
+
+That makes it a useful prototype for:
+- career tooling
+- agentic workflow design
+- multi-phase AI systems
+- local-first product experiments
+
+---
+
+## GitHub Push Notes
+
+Before pushing publicly:
+
+1. keep `.env` out of Git
+2. rotate any keys that were ever accidentally exposed
+3. verify `.env.example` contains only placeholders
+4. make sure local SQLite databases and logs are not committed
+
+The repo has already been cleaned to help with that:
+- generated DB files removed
+- debug artifacts removed
+- `.gitignore` tightened
+- `.env.example` sanitized
+
+---
+
+## Suggested Roadmap
+
+- strengthen cold email fallback behavior when providers return malformed data
+- cache and reuse company reports more aggressively
+- improve the application strategy phase into a first-class report
+- add better error messaging in the UI for rate-limit failures
+- add export/share support for candidate dossiers
+- add tests for the route contracts and JSON shapes
+- split provider integrations into cleaner adapters with explicit response schemas
 
 ---
 
 ## License
 
-MIT License — fork it, build on it, ship it.
-
----
-
-*Built by [TheNova6000](https://github.com/TheNova6000)*
+Add the license you want before pushing publicly. If you want permissive open source, MIT is a simple default.

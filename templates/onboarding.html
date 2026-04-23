@@ -35,6 +35,7 @@
 
 <script>
     let currentStep = 1;
+    let isSubmitting = false;
 
     function addMessage(sender, text) {
         const chat = document.getElementById('chat-container');
@@ -68,12 +69,16 @@
     };
 
     async function sendMessage() {
+        if (isSubmitting) return;
+
         const inputField = document.getElementById('user-input');
         const text = inputField.value.trim();
         if(!text) return;
         
         addMessage('You', text);
         inputField.value = '';
+        inputField.disabled = true;
+        isSubmitting = true;
 
         // Typing indicator
         const typingId = 'typing-' + Date.now();
@@ -90,27 +95,52 @@
         const response = await fetch('/api/onboarding/step', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({step: currentStep, input: text, user_id: 1})
+            body: JSON.stringify({step: currentStep, input: text})
         });
         
         document.getElementById(typingId).remove();
         
         const data = await response.json();
-        addMessage('Agent', data.response);
-        currentStep++;
 
-        if(currentStep > 4) {
+        if (!response.ok) {
+            addMessage('Agent', data.error || 'Unable to continue onboarding right now.');
+            inputField.disabled = false;
+            inputField.focus();
+            isSubmitting = false;
+            return;
+        }
+
+        addMessage('Agent', data.response);
+
+        if (data.completed) {
             setTimeout(async () => {
                 addMessage('Agent', 'Synthesizing your virtual character from all sources (LinkedIn, GitHub, Resume)...');
                 const synRes = await fetch('/api/onboarding/synthesize', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({user_id: 1})
+                    headers: {'Content-Type': 'application/json'}
                 });
                 const synData = await synRes.json();
-                addMessage('Agent', 'Synthesis complete! Profile locked in.<br><br><a href="/opportunities" class="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition mt-2">Proceed to Opportunities &rarr;</a>');
+
+                if (!synRes.ok) {
+                    addMessage('Agent', synData.error || 'Profile synthesis failed.');
+                    inputField.disabled = false;
+                    inputField.focus();
+                    isSubmitting = false;
+                    return;
+                }
+
+                addMessage('Agent', 'Synthesis complete! Redirecting you to opportunities...');
+                setTimeout(() => {
+                    window.location.href = data.redirect_url || '/opportunities';
+                }, 800);
             }, 1500);
+            return;
         }
+
+        currentStep = data.next_step || (currentStep + 1);
+        inputField.disabled = false;
+        inputField.focus();
+        isSubmitting = false;
     }
 </script>
 {% endblock %}
